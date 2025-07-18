@@ -1,9 +1,9 @@
-#-----
+# -----
 # Description   : Reconstruction functions on CPU
 # Date          : February 2021
 # Author        : Berkan Lafci
 # E-mail        : lafciberkan@gmail.com
-#-----
+# -----
 
 # import libraries
 import time
@@ -15,12 +15,13 @@ import pkg_resources as pkgr
 from scipy.sparse.linalg import lsqr
 from scipy.sparse import vstack
 
-#----------------------------------------------------------------------------------------------------------------------------#
-#------------------------------------------------------ backprojection ------------------------------------------------------#
-#----------------------------------------------------------------------------------------------------------------------------#
+# ----------------------------------------------------------------------------------------------------------------------------#
+# ------------------------------------------------------ backprojection ------------------------------------------------------#
+# ----------------------------------------------------------------------------------------------------------------------------#
+
 
 # recon backprojection class
-class cpuBP():
+class cpuBP:
     """
     Back projection reconstruction class on CPU for optoacoustic imaging
 
@@ -48,28 +49,28 @@ class cpuBP():
     def __init__(self):
         logging.info('  Class       "cpuBP"             : %s', __name__)
 
-        self._fieldOfView       = 0.03
-        self._pixelNumber       = 128
-        self._xSensor           = {}
-        self._ySensor           = {}
-        self._cupType           = 'ring'
-        self._speedOfSound      = 1540
-        self._nSamples          = 2032
-        self._fSampling         = 40e6
-        self._reconType         = 'full'
-        self._delayInSamples    = 0
-        self._wavelengths       = [800]
-        self.__numWavelengths   = 1
-        self.__numRepetitions   = 1
-        self._lowCutOff         = 0.1e6
-        self._highCutOff        = 6e6
-        self._fOrder            = 3
-    
-    #--------------------------------#
-    #---------- properties ----------#
-    #--------------------------------#
+        self._fieldOfView = 0.03
+        self._pixelNumber = 128
+        self._xSensor = {}
+        self._ySensor = {}
+        self._cupType = "ring"
+        self._speedOfSound = 1540
+        self._nSamples = 2032
+        self._fSampling = 40e6
+        self._reconType = "full"
+        self._delayInSamples = 0
+        self._wavelengths = [800]
+        self.__numWavelengths = 1
+        self.__numRepetitions = 1
+        self._lowCutOff = 0.1e6
+        self._highCutOff = 6e6
+        self._fOrder = 3
 
-    #--------------------------------#
+    # --------------------------------#
+    # ---------- properties ----------#
+    # --------------------------------#
+
+    # --------------------------------#
     # field of view
 
     @property
@@ -85,7 +86,7 @@ class cpuBP():
     def fieldOfView(self):
         del self._fieldOfView
 
-    #--------------------------------#
+    # --------------------------------#
     # pixel number
 
     @property
@@ -100,8 +101,8 @@ class cpuBP():
     @pixelNumber.deleter
     def pixelNumber(self):
         del self._pixelNumber
-    
-    #--------------------------------#
+
+    # --------------------------------#
     # x positions of sensor
 
     @property
@@ -115,8 +116,8 @@ class cpuBP():
     @xSensor.deleter
     def xSensor(self):
         del self._xSensor
-    
-    #--------------------------------#
+
+    # --------------------------------#
     # y positions of sensor
 
     @property
@@ -130,8 +131,21 @@ class cpuBP():
     @ySensor.deleter
     def ySensor(self):
         del self._ySensor
-    
-    #--------------------------------#
+
+    # --------------------------------#
+    @property
+    def zSensor(self):
+        return self._zSensor
+
+    @zSensor.setter
+    def zSensor(self, value):
+        self._zSensor = value
+
+    @zSensor.deleter
+    def zSensor(self):
+        del self._zSensor
+
+    # --------------------------------#
     # array properties
 
     @property
@@ -145,8 +159,8 @@ class cpuBP():
     @arrayData.deleter
     def arrayData(self):
         del self.__arrayData
-       
-    #--------------------------------#
+
+    # --------------------------------#
     # cup type
 
     @property
@@ -156,11 +170,13 @@ class cpuBP():
     @cupType.setter
     def cupType(self, value):
         logging.info('  Property    "cupType"           : %s', value)
-        self._cupType       = value
-        self.__arrayDir     = pkgr.resource_filename('pyoat', 'arrays/'+self._cupType+'Cup.mat')
-        self.__arrayData    = h5py.File(self.__arrayDir, 'r')
-        self.xSensor        = self.__arrayData['transducerPos'][0,:]
-        self.ySensor        = self.__arrayData['transducerPos'][1,:]
+        self._cupType = value
+        self.__arrayDir = pkgr.resource_filename(
+            "pyoat", "arrays/" + self._cupType + "Cup.mat"
+        )
+        self.__arrayData = h5py.File(self.__arrayDir, "r")
+        self.xSensor = self.__arrayData["transducerPos"][0, :]
+        self.ySensor = self.__arrayData["transducerPos"][1, :]
 
     @cupType.deleter
     def cupType(self):
@@ -168,7 +184,7 @@ class cpuBP():
         del self.xSensor
         del self.ySensor
 
-    #--------------------------------#
+    # --------------------------------#
     # speed of sound
 
     @property
@@ -184,7 +200,7 @@ class cpuBP():
     def speedOfSound(self):
         del self._speedOfSound
 
-    #--------------------------------#
+    # --------------------------------#
     # number of samples
 
     @property
@@ -200,7 +216,7 @@ class cpuBP():
     def nSamples(self):
         del self._nSamples
 
-    #--------------------------------#
+    # --------------------------------#
     # sampling frequency
 
     @property
@@ -216,7 +232,7 @@ class cpuBP():
     def fSampling(self):
         del self._fSampling
 
-    #--------------------------------#
+    # --------------------------------#
     # reconstruction type
 
     @property
@@ -232,7 +248,7 @@ class cpuBP():
     def reconType(self):
         del self._reconType
 
-    #--------------------------------#
+    # --------------------------------#
     # delay in samples
 
     @property
@@ -247,8 +263,8 @@ class cpuBP():
     @delayInSamples.deleter
     def delayInSamples(self):
         del self._delayInSamples
-    
-    #--------------------------------#
+
+    # --------------------------------#
     # wavelengths
 
     @property
@@ -257,15 +273,19 @@ class cpuBP():
 
     @wavelengths.setter
     def wavelengths(self, value):
-        logging.info('  Property    "wavelengths"       : {} nm'.format(', '.join(map(str, value))))
-        self._wavelengths   = value
+        logging.info(
+            '  Property    "wavelengths"       : {} nm'.format(
+                ", ".join(map(str, value))
+            )
+        )
+        self._wavelengths = value
         self.numWavelengths = len(value)
 
     @wavelengths.deleter
     def wavelengths(self):
         del self._wavelengths
-    
-    #--------------------------------#
+
+    # --------------------------------#
     # number of wavelengths
 
     @property
@@ -279,8 +299,8 @@ class cpuBP():
     @numWavelengths.deleter
     def numWavelengths(self):
         del self.__numWavelengths
-    
-    #--------------------------------#
+
+    # --------------------------------#
     # number of repetitions
 
     @property
@@ -295,7 +315,7 @@ class cpuBP():
     def numRepetitions(self):
         del self.__numRepetitions
 
-    #--------------------------------#
+    # --------------------------------#
     # low cutoff frequency of filter
 
     @property
@@ -311,7 +331,7 @@ class cpuBP():
     def lowCutOff(self):
         del self._lowCutOff
 
-    #--------------------------------#
+    # --------------------------------#
     # high cutoff frequency of filter
 
     @property
@@ -327,7 +347,7 @@ class cpuBP():
     def highCutOff(self):
         del self._highCutOff
 
-    #--------------------------------#
+    # --------------------------------#
     # order of filter
 
     @property
@@ -343,11 +363,11 @@ class cpuBP():
     def fOrder(self):
         del self._fOrder
 
-    #-------------------------------#
-    #---------- functions ----------#
-    #-------------------------------#
+    # -------------------------------#
+    # ---------- functions ----------#
+    # -------------------------------#
 
-    #-------------------------------#
+    # -------------------------------#
     # reconstruction function
 
     def reconBP(self, sigMat):
@@ -365,91 +385,254 @@ class cpuBP():
         if np.ndim(sigMat) == 2:
             sigMat = np.expand_dims(sigMat, axis=2)
 
-        pixelNumber         = self.pixelNumber
-        xSensor             = self.xSensor
-        ySensor             = self.ySensor
-        fSampling           = self.fSampling
-        self.numRepetitions = int(np.ceil(np.shape(sigMat)[2]/self.numWavelengths))
-        self.nSamples       = np.shape(sigMat)[0]
+        pixelNumber = self.pixelNumber
+        xSensor = self.xSensor
+        ySensor = self.ySensor
+        fSampling = self.fSampling
+        self.numRepetitions = int(np.ceil(np.shape(sigMat)[2] / self.numWavelengths))
+        self.nSamples = np.shape(sigMat)[0]
 
         # filter sigMat
-        sigMatF         = (-1)*sigMatFilter(sigMat, self.lowCutOff, self.highCutOff, fSampling, self.fOrder, 0.5)
-        
-        # normalize mean of sigMat around 0
-        sigMatN         = sigMatNormalize(sigMatF)
+        sigMatF = (-1) * sigMatFilter(
+            sigMat, self.lowCutOff, self.highCutOff, fSampling, self.fOrder, 0.5
+        )
 
-        #++++++++++++++++++++++++++++++++#
+        # normalize mean of sigMat around 0
+        sigMatN = sigMatNormalize(sigMatF)
+
+        # ++++++++++++++++++++++++++++++++#
         # beginning of reconstruction
 
-        print('***** reconstruction *****')
-        startTime       = time.time()
+        print("***** reconstruction *****")
+        startTime = time.time()
 
-        timePoints      = np.linspace(0, (self.nSamples)/fSampling, self.nSamples) + self.delayInSamples/fSampling
+        timePoints = (
+            np.linspace(0, (self.nSamples) / fSampling, self.nSamples)
+            + self.delayInSamples / fSampling
+        )
 
         # reconstructed image (output of this function)
-        imageRecon = np.zeros((pixelNumber, pixelNumber, self.numWavelengths, self.numRepetitions))
+        imageRecon = np.zeros(
+            (pixelNumber, pixelNumber, self.numWavelengths, self.numRepetitions)
+        )
 
         # length of one pixel
-        Dxy = self.fieldOfView/(pixelNumber-1)
-        
+        Dxy = self.fieldOfView / (pixelNumber - 1)
+
         # define imaging grid
-        x = np.linspace(((-1)*(pixelNumber/2-0.5)*Dxy),((pixelNumber/2-0.5)*Dxy),pixelNumber)
-        y = np.linspace(((-1)*(pixelNumber/2-0.5)*Dxy),((pixelNumber/2-0.5)*Dxy),pixelNumber)
-        meshX, meshY = np.meshgrid(x,y)
+        x = np.linspace(
+            ((-1) * (pixelNumber / 2 - 0.5) * Dxy),
+            ((pixelNumber / 2 - 0.5) * Dxy),
+            pixelNumber,
+        )
+        y = np.linspace(
+            ((-1) * (pixelNumber / 2 - 0.5) * Dxy),
+            ((pixelNumber / 2 - 0.5) * Dxy),
+            pixelNumber,
+        )
+        meshX, meshY = np.meshgrid(x, y)
 
         # loop through repetitions
         for repInd in range(0, self.numRepetitions):
-            
+
             # loop through wavelengths
             for waveInd in range(0, self.numWavelengths):
 
                 # loop through all transducer elements
-                for sensorInd in range(0,len(xSensor)):
+                for sensorInd in range(0, len(xSensor)):
 
                     # take corresponding signal for transducer element
-                    singleSignal    = sigMatN[:,sensorInd,[(repInd*self.numWavelengths)+waveInd]]
+                    singleSignal = sigMatN[
+                        :, sensorInd, [(repInd * self.numWavelengths) + waveInd]
+                    ]
 
                     # calculate derivative of the signal for 'derivative' and 'full' methods
-                    diffSignal      = np.concatenate((singleSignal[1:]-singleSignal[0:-1], [[0]]), axis=0)
-                    derSignal       = np.multiply(diffSignal, np.expand_dims(timePoints, axis=1))*fSampling
+                    diffSignal = np.concatenate(
+                        (singleSignal[1:] - singleSignal[0:-1], [[0]]), axis=0
+                    )
+                    derSignal = (
+                        np.multiply(diffSignal, np.expand_dims(timePoints, axis=1))
+                        * fSampling
+                    )
 
                     # distance of detector to image grid
-                    distX           = meshX - xSensor[sensorInd]
-                    distY           = meshY - ySensor[sensorInd]
-                    dist            = np.sqrt(distX**2 + distY**2)
+                    distX = meshX - xSensor[sensorInd]
+                    distY = meshY - ySensor[sensorInd]
+                    dist = np.sqrt(distX**2 + distY**2)
 
                     # find corresponding sample value for distance
-                    timeSample      = np.ceil((dist*fSampling)/self.speedOfSound - self.delayInSamples)
-                    timeSample      = timeSample.astype(int)
+                    timeSample = np.ceil(
+                        (dist * fSampling) / self.speedOfSound - self.delayInSamples
+                    )
+                    timeSample = timeSample.astype(int)
 
                     # apply number of samples bounds
-                    timeSample[timeSample<=0]               = 0
-                    timeSample[timeSample>=self.nSamples-2] = self.nSamples-3
-                    
+                    timeSample[timeSample <= 0] = 0
+                    timeSample[timeSample >= self.nSamples - 2] = self.nSamples - 3
+
                     # reconstruct image based on the defined method
-                    if self.reconType == 'direct':
-                        imageRecon[:,:,waveInd,repInd]    = imageRecon[:,:,waveInd,repInd] + np.squeeze(singleSignal[timeSample])
-                    elif self.reconType == 'derivative':
-                        imageRecon[:,:,waveInd,repInd]    = imageRecon[:,:,waveInd,repInd] - np.squeeze(derSignal[timeSample])
-                    elif self.reconType == 'full':
-                        imageRecon[:,:,waveInd,repInd]    = imageRecon[:,:,waveInd,repInd] + np.squeeze(singleSignal[timeSample] - derSignal[timeSample])
+                    if self.reconType == "direct":
+                        imageRecon[:, :, waveInd, repInd] = imageRecon[
+                            :, :, waveInd, repInd
+                        ] + np.squeeze(singleSignal[timeSample])
+                    elif self.reconType == "derivative":
+                        imageRecon[:, :, waveInd, repInd] = imageRecon[
+                            :, :, waveInd, repInd
+                        ] - np.squeeze(derSignal[timeSample])
+                    elif self.reconType == "full":
+                        imageRecon[:, :, waveInd, repInd] = imageRecon[
+                            :, :, waveInd, repInd
+                        ] + np.squeeze(singleSignal[timeSample] - derSignal[timeSample])
                     else:
-                        imageRecon[:,:,waveInd,repInd]    = imageRecon[:,:,waveInd,repInd] + np.squeeze(singleSignal[timeSample] - derSignal[timeSample])
+                        imageRecon[:, :, waveInd, repInd] = imageRecon[
+                            :, :, waveInd, repInd
+                        ] + np.squeeze(singleSignal[timeSample] - derSignal[timeSample])
 
         endTime = time.time()
-        print('time elapsed: %.2f' %(endTime-startTime))
-        
+        print("time elapsed: %.2f" % (endTime - startTime))
+
         # end of reconstruction
-        #++++++++++++++++++++++++++++++++#
-        
+        # ++++++++++++++++++++++++++++++++#
+
         return imageRecon
 
-#-----------------------------------------------------------------------------------------------------------------------------#
-#-------------------------------------------------------- model based --------------------------------------------------------#
-#-----------------------------------------------------------------------------------------------------------------------------#
+    def reconBP3D(self, sigMat):
+        """
+        Same as reconBP but includes information from the z position of the array
+        5 Dimensional output, height, width, thickness, wavelength, repeation
+        """
+        from pyoat import sigMatFilter, sigMatNormalize
+
+        if np.ndim(sigMat) == 2:
+            sigMat = np.expand_dims(sigMat, axis=2)
+
+        pixelNumber = self.pixelNumber
+        xSensor = self.xSensor
+        ySensor = self.ySensor
+        zSensor = self.zSensor
+        fSampling = self.fSampling
+        self.numRepetitions = int(np.ceil(np.shape(sigMat)[2] / self.numWavelengths))
+        self.nSamples = np.shape(sigMat)[0]
+
+        # filter sigMat
+        sigMatF = (-1) * sigMatFilter(
+            sigMat, self.lowCutOff, self.highCutOff, fSampling, self.fOrder, 0.5
+        )
+
+        # normalize mean of sigMat around 0
+        sigMatN = sigMatNormalize(sigMatF)
+
+        # ++++++++++++++++++++++++++++++++#
+        # beginning of reconstruction
+
+        print("***** reconstruction *****")
+        startTime = time.time()
+
+        timePoints = (
+            np.linspace(0, (self.nSamples) / fSampling, self.nSamples)
+            + self.delayInSamples / fSampling
+        )
+
+        # reconstructed image (output of this function)
+        imageRecon = np.zeros(
+            (
+                pixelNumber,
+                pixelNumber,
+                pixelNumber,
+                self.numWavelengths,
+                self.numRepetitions,
+            )
+        )
+
+        # length of one pixel
+        Dxyz = self.fieldOfView / (pixelNumber - 1)
+
+        # define imaging grid
+        x = np.linspace(
+            ((-1) * (pixelNumber / 2 - 0.5) * Dxyz),
+            ((pixelNumber / 2 - 0.5) * Dxyz),
+            pixelNumber,
+        )
+        y = np.linspace(
+            ((-1) * (pixelNumber / 2 - 0.5) * Dxyz),
+            ((pixelNumber / 2 - 0.5) * Dxyz),
+            pixelNumber,
+        )
+        z = np.linspace(
+            ((-1) * (pixelNumber / 2 - 0.5) * Dxyz),
+            ((pixelNumber / 2 - 0.5) * Dxyz),
+            pixelNumber,
+        )
+        meshX, meshY, meshZ = np.meshgrid(x, y, z)
+
+        # loop through repetitions
+        for repInd in range(0, self.numRepetitions):
+
+            # loop through wavelengths
+            for waveInd in range(0, self.numWavelengths):
+
+                # loop through all transducer elements
+                for sensorInd in range(0, len(xSensor)):
+
+                    # take corresponding signal for transducer element
+                    singleSignal = sigMatN[
+                        :, sensorInd, [(repInd * self.numWavelengths) + waveInd]
+                    ]
+
+                    # calculate derivative of the signal for 'derivative' and 'full' methods
+                    diffSignal = np.concatenate(
+                        (singleSignal[1:] - singleSignal[0:-1], [[0]]), axis=0
+                    )
+                    derSignal = (
+                        np.multiply(diffSignal, np.expand_dims(timePoints, axis=1))
+                        * fSampling
+                    )
+
+                    # distance of detector to image grid
+                    distX = meshX - xSensor[sensorInd]
+                    distY = meshY - ySensor[sensorInd]
+                    distZ = meshZ - zSensor[sensorInd]
+                    dist = np.sqrt(distX**2 + distY**2 + distZ**2)
+
+                    # find corresponding sample value for distance
+                    timeSample = np.ceil(
+                        (dist * fSampling) / self.speedOfSound - self.delayInSamples
+                    )
+                    timeSample = timeSample.astype(int)
+
+                    # apply number of samples bounds
+                    timeSample[timeSample <= 0] = 0
+                    timeSample[timeSample >= self.nSamples - 2] = self.nSamples - 3
+
+                    # reconstruct image based on the defined method
+                    if self.reconType == "direct":
+                        imageRecon[:, :, :, waveInd, repInd] = imageRecon[
+                            :, :, :, waveInd, repInd
+                        ] + np.squeeze(singleSignal[timeSample])
+                    elif self.reconType == "derivative":
+                        imageRecon[:, :, :, waveInd, repInd] = imageRecon[
+                            :, :, :, waveInd, repInd
+                        ] - np.squeeze(derSignal[timeSample])
+                    elif self.reconType == "full":
+                        imageRecon[:, :, :, waveInd, repInd] = imageRecon[
+                            :, :, :, waveInd, repInd
+                        ] + np.squeeze(singleSignal[timeSample] - derSignal[timeSample])
+                    else:
+                        imageRecon[:, :, :, waveInd, repInd] = imageRecon[
+                            :, :, :, waveInd, repInd
+                        ] + np.squeeze(singleSignal[timeSample] - derSignal[timeSample])
+
+        endTime = time.time()
+        print("time elapsed: %.2f" % (endTime - startTime))
+
+
+# -----------------------------------------------------------------------------------------------------------------------------#
+# -------------------------------------------------------- model based --------------------------------------------------------#
+# -----------------------------------------------------------------------------------------------------------------------------#
+
 
 # recon model based class
-class cpuMB():
+class cpuMB:
     """
     Model based reconstruction class on CPU for optoacoustic imaging
 
@@ -481,33 +664,33 @@ class cpuMB():
     def __init__(self):
         logging.info('  Class       "cpuMB"             : %s', __name__)
 
-        self._fieldOfView       = 0.03
-        self._nAngles           = 256
-        self._pixelNumber       = 128
-        self._xSensor           = {}
-        self._ySensor           = {}
-        self._rSensor           = {}
-        self._angleSensor       = {}
-        self._cupType           = 'ring'
-        self._speedOfSound      = 1540
-        self._nSamples          = 2032
-        self._fSampling         = 40e6
-        self._delayInSamples    = 0
-        self._wavelengths       = [800]
-        self._numWavelengths    = 1
-        self._numRepetitions    = 1
-        self._lowCutOff         = 0.1e6
-        self._highCutOff        = 6e6
-        self._fOrder            = 3
-        self._numIterations     = 5
-        self._regMethod         = None
-        self._lambdaReg         = 15e6
+        self._fieldOfView = 0.03
+        self._nAngles = 256
+        self._pixelNumber = 128
+        self._xSensor = {}
+        self._ySensor = {}
+        self._rSensor = {}
+        self._angleSensor = {}
+        self._cupType = "ring"
+        self._speedOfSound = 1540
+        self._nSamples = 2032
+        self._fSampling = 40e6
+        self._delayInSamples = 0
+        self._wavelengths = [800]
+        self._numWavelengths = 1
+        self._numRepetitions = 1
+        self._lowCutOff = 0.1e6
+        self._highCutOff = 6e6
+        self._fOrder = 3
+        self._numIterations = 5
+        self._regMethod = None
+        self._lambdaReg = 15e6
 
-    #--------------------------------#
-    #---------- properties ----------#
-    #--------------------------------#
+    # --------------------------------#
+    # ---------- properties ----------#
+    # --------------------------------#
 
-    #--------------------------------#
+    # --------------------------------#
     # field of view
 
     @property
@@ -523,7 +706,7 @@ class cpuMB():
     def fieldOfView(self):
         del self._fieldOfView
 
-    #--------------------------------#
+    # --------------------------------#
     # number of angles
 
     @property
@@ -538,7 +721,7 @@ class cpuMB():
     def nAngles(self):
         del self._nAngles
 
-    #--------------------------------#
+    # --------------------------------#
     # pixel number
 
     @property
@@ -548,14 +731,14 @@ class cpuMB():
     @pixelNumber.setter
     def pixelNumber(self, value):
         logging.info('  Property    "pixelNumber"       : %d ', value)
-        self._pixelNumber   = value
-        self._nAngles       = 2*value
+        self._pixelNumber = value
+        self._nAngles = 2 * value
 
     @pixelNumber.deleter
     def pixelNumber(self):
         del self._pixelNumber
 
-    #--------------------------------#
+    # --------------------------------#
     # x positions of sensor
 
     @property
@@ -569,8 +752,8 @@ class cpuMB():
     @xSensor.deleter
     def xSensor(self):
         del self._xSensor
-    
-    #--------------------------------#
+
+    # --------------------------------#
     # y positions of sensor
 
     @property
@@ -585,7 +768,7 @@ class cpuMB():
     def ySensor(self):
         del self._ySensor
 
-    #--------------------------------#
+    # --------------------------------#
     # radius of sensor
 
     @property
@@ -599,8 +782,8 @@ class cpuMB():
     @rSensor.deleter
     def rSensor(self):
         del self._rSensor
-    
-    #--------------------------------#
+
+    # --------------------------------#
     # sensor angle
 
     @property
@@ -614,8 +797,8 @@ class cpuMB():
     @angleSensor.deleter
     def angleSensor(self):
         del self._angleSensor
-    
-    #--------------------------------#
+
+    # --------------------------------#
     # cup type
 
     @property
@@ -625,13 +808,17 @@ class cpuMB():
     @cupType.setter
     def cupType(self, value):
         logging.info('  Property    "cupType"           : %s', value)
-        self._cupType       = value
-        self.__arrayDir     = pkgr.resource_filename('pyoat', 'arrays/'+self._cupType+'Cup.mat')
-        self.__arrayData    = h5py.File(self.__arrayDir, 'r')
-        self.xSensor        = self.__arrayData['transducerPos'][0,:]
-        self.ySensor        = self.__arrayData['transducerPos'][1,:]
-        self.rSensor        = np.sqrt(self.xSensor**2 + self.ySensor**2)
-        self.angleSensor    = np.arctan2(self.ySensor,self.xSensor) + 2*math.pi*(np.multiply((self.xSensor>0),(self.ySensor<0)))
+        self._cupType = value
+        self.__arrayDir = pkgr.resource_filename(
+            "pyoat", "arrays/" + self._cupType + "Cup.mat"
+        )
+        self.__arrayData = h5py.File(self.__arrayDir, "r")
+        self.xSensor = self.__arrayData["transducerPos"][0, :]
+        self.ySensor = self.__arrayData["transducerPos"][1, :]
+        self.rSensor = np.sqrt(self.xSensor**2 + self.ySensor**2)
+        self.angleSensor = np.arctan2(self.ySensor, self.xSensor) + 2 * math.pi * (
+            np.multiply((self.xSensor > 0), (self.ySensor < 0))
+        )
 
     @cupType.deleter
     def cupType(self):
@@ -640,7 +827,7 @@ class cpuMB():
         del self.ySensor
         del self.rSensor
 
-    #--------------------------------#
+    # --------------------------------#
     # speed of sound
 
     @property
@@ -656,7 +843,7 @@ class cpuMB():
     def speedOfSound(self):
         del self._speedOfSound
 
-    #--------------------------------#
+    # --------------------------------#
     # number of samples
 
     @property
@@ -672,7 +859,7 @@ class cpuMB():
     def nSamples(self):
         del self._nSamples
 
-    #--------------------------------#
+    # --------------------------------#
     # sampling frequency
 
     @property
@@ -688,7 +875,7 @@ class cpuMB():
     def fSampling(self):
         del self._fSampling
 
-    #--------------------------------#
+    # --------------------------------#
     # delay in samples
 
     @property
@@ -703,8 +890,8 @@ class cpuMB():
     @delayInSamples.deleter
     def delayInSamples(self):
         del self._delayInSamples
-    
-    #--------------------------------#
+
+    # --------------------------------#
     # wavelengths
 
     @property
@@ -713,16 +900,19 @@ class cpuMB():
 
     @wavelengths.setter
     def wavelengths(self, value):
-        logging.info('  Property    "wavelengths"       : {} nm'.format(', '.join(map(str, value))))
-        self._wavelengths   = value
+        logging.info(
+            '  Property    "wavelengths"       : {} nm'.format(
+                ", ".join(map(str, value))
+            )
+        )
+        self._wavelengths = value
         self.numWavelengths = len(value)
-
 
     @wavelengths.deleter
     def wavelengths(self):
         del self._wavelengths
-    
-    #--------------------------------#
+
+    # --------------------------------#
     # number of wavelengths
 
     @property
@@ -736,8 +926,8 @@ class cpuMB():
     @numWavelengths.deleter
     def numWavelengths(self):
         del self._numWavelengths
-    
-    #--------------------------------#
+
+    # --------------------------------#
     # number of repetitions
 
     @property
@@ -752,7 +942,7 @@ class cpuMB():
     def numRepetitions(self):
         del self._numRepetitions
 
-    #--------------------------------#
+    # --------------------------------#
     # low cutoff frequency of filter
 
     @property
@@ -768,7 +958,7 @@ class cpuMB():
     def lowCutOff(self):
         del self._lowCutOff
 
-    #--------------------------------#
+    # --------------------------------#
     # high cutoff frequency of filter
 
     @property
@@ -784,7 +974,7 @@ class cpuMB():
     def highCutOff(self):
         del self._highCutOff
 
-    #--------------------------------#
+    # --------------------------------#
     # order of filter
 
     @property
@@ -800,7 +990,7 @@ class cpuMB():
     def fOrder(self):
         del self._fOrder
 
-    #--------------------------------#
+    # --------------------------------#
     # iteration number
 
     @property
@@ -816,7 +1006,7 @@ class cpuMB():
     def numIterations(self):
         del self._numIterations
 
-    #--------------------------------#
+    # --------------------------------#
     # regularization method
 
     @property
@@ -832,7 +1022,7 @@ class cpuMB():
     def regMethod(self):
         del self._regMethod
 
-    #--------------------------------#
+    # --------------------------------#
     # regularization method
 
     @property
@@ -848,11 +1038,11 @@ class cpuMB():
     def lambdaReg(self):
         del self._lambdaReg
 
-    #-------------------------------#
-    #---------- functions ----------#
-    #-------------------------------#
+    # -------------------------------#
+    # ---------- functions ----------#
+    # -------------------------------#
 
-    #-------------------------------#
+    # -------------------------------#
     # model matrix calculation
 
     def calculateModelMatrix(self):
@@ -867,31 +1057,34 @@ class cpuMB():
 
         from pyoat import modelOA
 
-        print('***********************************')
-        print('*** Calculating model matrix... ***')
+        print("***********************************")
+        print("*** Calculating model matrix... ***")
 
         # initialize optoacoustic model
-        mOA                 = modelOA()
+        mOA = modelOA()
 
         # set OA model parameters
-        mOA.fieldOfView     = self.fieldOfView
-        mOA.pixelNumber     = self.pixelNumber
-        mOA.speedOfSound    = self.speedOfSound
-        mOA.nSamples        = self.nSamples
-        mOA.fSampling       = self.fSampling
-        mOA.regMethod       = self.regMethod
-        mOA.rSensor         = self.rSensor
-        mOA.angleSensor     = self.angleSensor
-        mOA.nAngles         = self.nAngles
-        mOA.delayInSamples  = self.delayInSamples
-        
-        timePoints      = np.linspace(0, (self.nSamples-2)/self.fSampling, self.nSamples-2) + self.delayInSamples/self.fSampling
+        mOA.fieldOfView = self.fieldOfView
+        mOA.pixelNumber = self.pixelNumber
+        mOA.speedOfSound = self.speedOfSound
+        mOA.nSamples = self.nSamples
+        mOA.fSampling = self.fSampling
+        mOA.regMethod = self.regMethod
+        mOA.rSensor = self.rSensor
+        mOA.angleSensor = self.angleSensor
+        mOA.nAngles = self.nAngles
+        mOA.delayInSamples = self.delayInSamples
 
-        modelMatrix         = mOA.calculateModel(timePoints)
-        
+        timePoints = (
+            np.linspace(0, (self.nSamples - 2) / self.fSampling, self.nSamples - 2)
+            + self.delayInSamples / self.fSampling
+        )
+
+        modelMatrix = mOA.calculateModel(timePoints)
+
         return modelMatrix
 
-    #-------------------------------#
+    # -------------------------------#
     # recon matrix calculation
 
     def calculateReconMatrix(self, modelMatrix):
@@ -904,24 +1097,24 @@ class cpuMB():
 
         from pyoat import modelOA
 
-        print('***** Merging matrices *****')
+        print("***** Merging matrices *****")
 
         # initialize optoacoustic model
-        mOA                 = modelOA()
+        mOA = modelOA()
 
         # set regularization parameters
-        mOA.pixelNumber     = self.pixelNumber
-        mOA.lambdaReg       = self.lambdaReg
+        mOA.pixelNumber = self.pixelNumber
+        mOA.lambdaReg = self.lambdaReg
 
-        if self.regMethod == 'tikonov':
-            regMatrix       = mOA.calculateRegularizationMatrix()
-            reconMatrix     = vstack((modelMatrix, regMatrix))
+        if self.regMethod == "tikonov":
+            regMatrix = mOA.calculateRegularizationMatrix()
+            reconMatrix = vstack((modelMatrix, regMatrix))
         else:
-            reconMatrix     = modelMatrix
-        
+            reconMatrix = modelMatrix
+
         return reconMatrix
 
-    #-------------------------------#
+    # -------------------------------#
     # reconstruction function
 
     def recon(self, sigMat, reconMatrix):
@@ -940,45 +1133,60 @@ class cpuMB():
         if np.ndim(sigMat) == 2:
             sigMat = np.expand_dims(sigMat, axis=2)
 
-        pixelNumber         = self.pixelNumber
-        self.numRepetitions = int(np.ceil(np.shape(sigMat)[2]/self.numWavelengths))
+        pixelNumber = self.pixelNumber
+        self.numRepetitions = int(np.ceil(np.shape(sigMat)[2] / self.numWavelengths))
 
         # filter sigMat
-        sigMatF         = (-1)*sigMatFilter(sigMat, self.lowCutOff, self.highCutOff, self.fSampling, self.fOrder, 0.5)
-        
+        sigMatF = (-1) * sigMatFilter(
+            sigMat, self.lowCutOff, self.highCutOff, self.fSampling, self.fOrder, 0.5
+        )
+
         # normalize mean of sigMat around 0
-        sigMatN         = sigMatNormalize(sigMatF)
+        sigMatN = sigMatNormalize(sigMatF)
 
         # reconstructed image (output of this function)
-        imageRecon = np.zeros((pixelNumber, pixelNumber, self.numWavelengths, self.numRepetitions))
+        imageRecon = np.zeros(
+            (pixelNumber, pixelNumber, self.numWavelengths, self.numRepetitions)
+        )
 
-        #++++++++++++++++++++++++++++++++#
+        # ++++++++++++++++++++++++++++++++#
         # beginning of reconstruction
 
-        print('***** reconstruction *****')
-        startTime       = time.time()
-        
+        print("***** reconstruction *****")
+        startTime = time.time()
+
         # loop through repetitions
         for repInd in range(0, self.numRepetitions):
-            
+
             # loop through wavelengths
             for waveInd in range(0, self.numWavelengths):
-            
-                sigMatVec       = np.expand_dims(np.transpose(sigMatN[:,:,[(repInd*self.numWavelengths)+waveInd]]).reshape(-1),axis=1)
 
-                if self.regMethod == 'tikonov':
-                    bVec        = np.concatenate((sigMatVec, np.zeros((pixelNumber*pixelNumber, 1)) ))
+                sigMatVec = np.expand_dims(
+                    np.transpose(
+                        sigMatN[:, :, [(repInd * self.numWavelengths) + waveInd]]
+                    ).reshape(-1),
+                    axis=1,
+                )
+
+                if self.regMethod == "tikonov":
+                    bVec = np.concatenate(
+                        (sigMatVec, np.zeros((pixelNumber * pixelNumber, 1)))
+                    )
                 else:
-                    bVec        = sigMatVec
+                    bVec = sigMatVec
 
-                recon, reasonTerm, iterNum, normR = lsqr(reconMatrix, bVec, iter_lim=self.numIterations)[:4]
+                recon, reasonTerm, iterNum, normR = lsqr(
+                    reconMatrix, bVec, iter_lim=self.numIterations
+                )[:4]
 
-                imageRecon[:,:,waveInd, repInd]    = np.reshape(recon, (pixelNumber, pixelNumber))
+                imageRecon[:, :, waveInd, repInd] = np.reshape(
+                    recon, (pixelNumber, pixelNumber)
+                )
 
         endTime = time.time()
-        print('time elapsed: %.2f' %(endTime-startTime))
-        
+        print("time elapsed: %.2f" % (endTime - startTime))
+
         # end of reconstruction
-        #++++++++++++++++++++++++++++++++#
+        # ++++++++++++++++++++++++++++++++#
 
         return imageRecon
