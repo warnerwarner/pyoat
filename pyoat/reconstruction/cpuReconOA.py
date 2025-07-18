@@ -624,6 +624,7 @@ class cpuBP:
 
         endTime = time.time()
         print("time elapsed: %.2f" % (endTime - startTime))
+        print("done reconstructing")
 
         return imageRecon
 
